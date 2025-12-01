@@ -1,5 +1,3 @@
-<div align="center">
-<img src="resources/icons/app.svg" width="120" height="120" alt="Logo" />
 🧰 Python Fluent Toolbox
 一款基于 PySide6 & Fluent-Widgets 的现代化、模块化桌面工具箱
 一个像浏览器一样管理工具的生产力平台。支持多标签页多开、插件热插拔、自定义主题色。
@@ -28,28 +26,37 @@ Python Fluent Toolbox 是一个高度可扩展的个人工具箱框架。它抛�
 内置 ResourceManager，图标资源随用随取，无需繁琐配置。
 📸 应用截图
 建议在此处放入软件的截图，例如 docs/images/screenshot_home.png
-首页导航 (Gallery)	Markdown 编辑器 (Dark Mode)
-<img src="docs/images/home_light.png" alt="Home" width="400"/>	<img src="docs/images/markdown_dark.png" alt="Markdown" width="400"/>
-数据转换工坊	多标签页工作台
-<img src="docs/images/data_tool.png" alt="Data Tool" width="400"/>	<img src="docs/images/tabs_demo.png" alt="Tabs" width="400"/>
+
 🚀 安装指南
 前置要求
 Python 3.8 或更高版本
 步骤
 克隆仓库
+
+```
 code
 Bash
 git clone https://github.com/yourname/python-fluent-toolbox.git
 cd python-fluent-toolbox
+```
+
 安装依赖
+
+```
 code
 Bash
 pip install -r requirements.txt
+```
+
 (注: 核心依赖包括 PySide6, PyQt-Fluent-Widgets, pandas, openpyxl, markdown, pygments)
 运行程序
+
+```
 code
 Bash
 python main.py
+```
+
 📦 内置插件
 项目内置了两个高质量的生产力工具作为示例：
 1. 📝 Markdown 笔记
@@ -70,6 +77,8 @@ Excel 工具: 一键将 Excel/CSV 文件转换为 JSON 数组。
 在 plugins/ 下新建文件夹。
 继承 PluginInterface 类。
 实现 create_widget 方法返回你的界面。
+
+```
 code
 Python
 # 示例：plugins/my_tool/tool.py
@@ -84,7 +93,11 @@ class MyPlugin(PluginInterface):
     
     def create_widget(self):
         return QLabel("Hello World!")
+```
+
 📂 项目结构
+
+```
 code
 Text
 MyToolbox/
@@ -102,6 +115,8 @@ MyToolbox/
 │   ├── markdown_editor/     # [内置] Markdown 插件
 │   └── demo_tool/           # [内置] 数据转换插件
 └── config/                  # 用户配置文件 (自动生成)
+```
+
 🤝 贡献
 欢迎提交 Pull Request 或 Issue！
 如果你发现 Bug，请提交 Issue。
