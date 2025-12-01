@@ -1,0 +1,42 @@
+/* ui/theme.qss */
+QMainWindow {
+    background-color: #f0f2f5;
+}
+
+/* 左侧导航栏 */
+QListWidget {
+    background-color: #ffffff;
+    border: none;
+    outline: none;
+    min-width: 200px;
+    padding-top: 10px;
+}
+
+QListWidget::item {
+    height: 50px;
+    padding-left: 15px;
+    color: #333;
+    border-left: 4px solid transparent;
+}
+
+QListWidget::item:selected {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border-left: 4px solid #1890ff; /* 选中时的左侧蓝条 */
+}
+
+QListWidget::item:hover {
+    background-color: #f5f5f5;
+}
+
+/* 右侧内容区 */
+QStackedWidget {
+    background-color: #ffffff;
+    border-top-left-radius: 10px; /* 圆角设计 */
+    margin: 10px;
+}
+
+QLabel {
+    font-family: "Microsoft YaHei";
+    font-size: 14px;
+}
