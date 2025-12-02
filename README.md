@@ -3,7 +3,7 @@
 一个像浏览器一样管理工具的生产力平台。支持多标签页多开、插件热插拔、自定义主题色。
 特性 • 安装 • 内置工具 • 开发插件 • 截图
 <p align="center">
-<img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python Version">
+<img src="https://img.shields.io/badge/Python-3.12+-blue.svg" alt="Python Version">
 <img src="https://img.shields.io/badge/UI-WinUI%203-0078D4.svg" alt="UI Style">
 <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Platform">
