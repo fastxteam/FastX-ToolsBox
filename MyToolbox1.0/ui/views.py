@@ -1,61 +1,138 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QScrollArea,
-                               QTabWidget, QLabel, QTabBar, QToolButton)
+                               QTabWidget, QLabel, QTabBar, QToolButton, QHBoxLayout)  # 引入 QHBoxLayout
 from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QIcon, QPainter, QColor, QPixmap
-from qfluentwidgets import FlowLayout, TitleLabel, FluentIcon, InfoBar, InfoBarPosition
+from qfluentwidgets import FlowLayout, TitleLabel, FluentIcon, InfoBar, TransparentToolButton
 from core.config import ConfigManager
+from core.resource_manager import qicon
 from .gallery_card import ToolCard
+from .sort_dialog import ToolOrderDialog  # 【新增】引入对话框
 
 
 # ==========================================
-# 1. 首页视图 (画廊展示)
+# 1. 首页视图 (修改版)
 # ==========================================
 class HomeView(QWidget):
-    """首页：展示工具卡片"""
-    tool_selected = Signal(object)  # 左键点击 (默认单例)
-    tool_new_tab = Signal(object)  # 右键-新标签页 (强制多开)
-    tool_new_window = Signal(object)  # 右键-新窗口
+    tool_selected = Signal(object)
+    tool_new_tab = Signal(object)
+    tool_new_window = Signal(object)
+    order_changed = Signal()  # 【新增】顺序改变信号，通知主窗口重绘
 
     def __init__(self, plugins, parent=None):
         super().__init__(parent)
+        self.current_plugins = plugins  # 保存当前插件列表引用
+
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # 滚动区域
         self.scroll = QScrollArea(self)
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("QScrollArea{border:none; background: transparent;}")
         self.main_layout.addWidget(self.scroll)
 
-        # 内容容器
         self.scroll_content = QWidget()
         self.scroll.setWidget(self.scroll_content)
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setContentsMargins(30, 30, 30, 30)
         self.scroll_layout.setSpacing(20)
 
-        # 标题
-        self.scroll_layout.addWidget(TitleLabel("工具导航", self))
+        # --- 标题栏 (改为水平布局以放置按钮) ---
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(TitleLabel("工具导航", self))
+        header_layout.addStretch(1)
 
-        # 流式布局 (用于放置卡片)
+        # 【新增】排序按钮
+        self.btn_sort = TransparentToolButton(qicon("sort"), self)
+        self.btn_sort.setToolTip("调整工具顺序")
+        self.btn_sort.clicked.connect(self.show_sort_dialog)
+        header_layout.addWidget(self.btn_sort)
+
+        self.scroll_layout.addLayout(header_layout)
+
+        # 流式布局
         self.flow_widget = QWidget()
         self.flow_layout = FlowLayout(self.flow_widget, needAni=True)
         self.flow_layout.setContentsMargins(0, 10, 0, 0)
         self.flow_layout.setVerticalSpacing(20)
         self.flow_layout.setHorizontalSpacing(20)
 
-        # 添加卡片
+        self.scroll_layout.addWidget(self.flow_widget)
+        self.scroll_layout.addStretch(1)
+
+        # 初始渲染
+        self.render_cards(plugins)
+
+    def render_cards(self, plugins):
+        """渲染卡片"""
+        # 1. 清除旧卡片
+        # 注意：FlowLayout 的 removeAllWidgets 可能不彻底，需要手动清理
+        self.flow_layout.removeAllWidgets()
+        # 为了保险，手动 delete 子控件
+        for child in self.flow_widget.children():
+            if isinstance(child, ToolCard):
+                child.deleteLater()
+
+        # 2. 重新添加
         for plugin in plugins:
             card = ToolCard(plugin, self.flow_widget)
-            # 连接卡片信号
             card.tool_clicked.connect(self.tool_selected)
             card.open_new_tab.connect(self.tool_new_tab)
             card.open_new_window.connect(self.tool_new_window)
             self.flow_layout.addWidget(card)
 
-        self.scroll_layout.addWidget(self.flow_widget)
-        self.scroll_layout.addStretch(1)
+    def show_sort_dialog(self):
+        """显示排序弹窗"""
+        # 局部引入，避免循环导入
+        from .sort_dialog import ToolOrderDialog
+        from core.config import ConfigManager  # 确保引入配置管理器
 
+        dialog = ToolOrderDialog(self.current_plugins, self.window())
+
+        # 只有点击了"保存" (yesButton)，exec() 才会返回 1 (True)
+        if dialog.exec():
+            new_order_names = dialog.get_new_order()
+
+            print(f"[DEBUG] 准备保存顺序: {new_order_names}")
+
+            try:
+                # 1. 读取旧配置
+                config = ConfigManager.load()
+                print(f"[DEBUG] 旧配置: {config.get('plugin_order')}")
+
+                # 2. 更新字段
+                config["plugin_order"] = new_order_names
+
+                # 3. 写入文件
+                ConfigManager.save(config)
+                print("[DEBUG] 配置文件写入成功！")
+
+            except Exception as e:
+                print(f"[ERROR] 保存配置失败: {e}")
+                InfoBar.error("错误", f"保存失败: {e}", parent=self)
+                return
+
+            # 4. 内存重排 (更新界面显示)
+            plugin_map = {p.name: p for p in self.current_plugins}
+            new_plugin_list = []
+
+            for name in new_order_names:
+                if name in plugin_map:
+                    new_plugin_list.append(plugin_map[name])
+                    del plugin_map[name]
+
+            # 追加剩余的
+            for p in plugin_map.values():
+                new_plugin_list.append(p)
+
+            self.current_plugins = new_plugin_list
+            self.render_cards(self.current_plugins)
+
+            InfoBar.success("成功", "工具顺序已保存", parent=self)
+        else:
+            print("[DEBUG] 用户点击了取消")
+
+
+# ... (CentralTabWidget 类保持不变) ...
 
 # ==========================================
 # 2. 统一工作台 (核心 Tab 视图)

@@ -4,5 +4,12 @@
         1000,
         877
     ],
-    "custom_colors": {}
+    "custom_colors": {},
+    "plugin_order": [
+        "数据转换工坊",
+        "目录树工具箱",
+        "Markdown 笔记",
+        "Python打包工具",
+        "科学计算器"
+    ]
 }

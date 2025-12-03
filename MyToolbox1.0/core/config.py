@@ -1,61 +1,83 @@
 import json
+import os
 from pathlib import Path
 from qfluentwidgets import Theme, setTheme
 
 
 class ConfigManager:
     """管理应用配置"""
-    CONFIG_DIR = Path("config")
+
+    # =========================================================
+    # 【核心修复】使用绝对路径定位项目根目录
+    # =========================================================
+    # __file__ 是当前文件 (core/config.py) 的路径
+    # .parent 是 core 目录
+    # .parent.parent 是项目根目录 (MyToolbox1.0)
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+    CONFIG_DIR = PROJECT_ROOT / "config"
     CONFIG_FILE = CONFIG_DIR / "settings.json"
 
     DEFAULT_CONFIG = {
         "theme": "Light",  # Light, Dark, Auto
         "window_size": [1000, 700],
-        "custom_colors": {}  # 【新增】存储用户自定义颜色 {plugin_name: hex_code}
+        "custom_colors": {},
+        "plugin_order": []
     }
 
     @classmethod
     def load(cls):
         """加载配置"""
+        # 调试打印：确认读取路径
+        # print(f"[Config] Reading from: {cls.CONFIG_FILE}")
+
         if not cls.CONFIG_FILE.exists():
-            return cls.DEFAULT_CONFIG
+            return cls.DEFAULT_CONFIG.copy()
 
         try:
             with open(cls.CONFIG_FILE, "r", encoding="utf-8") as f:
-                config = json.load(f)
-                # 深度合并，防止旧配置文件缺少新字段
+                content = f.read()
+                if not content.strip():  # 防止文件为空导致报错
+                    return cls.DEFAULT_CONFIG.copy()
+
+                config = json.loads(content)
+
+                # 深度合并默认配置
                 merged = cls.DEFAULT_CONFIG.copy()
                 merged.update(config)
-                if "custom_colors" not in merged:
-                    merged["custom_colors"] = {}
+
+                # 确保关键字段存在
+                if "custom_colors" not in merged: merged["custom_colors"] = {}
+                if "plugin_order" not in merged: merged["plugin_order"] = []
+
                 return merged
-        except Exception:
-            return cls.DEFAULT_CONFIG
+        except Exception as e:
+            print(f"[Config] Load Error: {e}")
+            return cls.DEFAULT_CONFIG.copy()
 
     @classmethod
     def save(cls, config_data):
         """保存配置"""
-        if not cls.CONFIG_DIR.exists():
-            cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        try:
+            # 调试打印：确认写入路径
+            print(f"[Config] Saving to: {cls.CONFIG_FILE}")
 
-        with open(cls.CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(config_data, f, indent=4)
+            if not cls.CONFIG_DIR.exists():
+                cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    # =========================================================
-    # 【重点检查】请确保你的文件中包含下面这个 get_color 方法
-    # =========================================================
+            with open(cls.CONFIG_FILE, "w", encoding="utf-8") as f:
+                # ensure_ascii=False 确保中文插件名正常显示，indent=4 美化格式
+                json.dump(config_data, f, indent=4, ensure_ascii=False)
+
+        except Exception as e:
+            print(f"[Config] Save Error: {e}")
+
     @classmethod
     def get_color(cls, plugin):
-        """
-        获取插件颜色
-        优先读取配置文件中的自定义颜色，如果没有，则使用插件自带的默认颜色
-        """
+        """获取插件颜色"""
         config = cls.load()
         user_colors = config.get("custom_colors", {})
-
-        # 获取插件默认颜色，如果插件没定义 theme_color，则给一个默认青色
         default_color = getattr(plugin, 'theme_color', '#009faa')
-
         return user_colors.get(plugin.name, default_color)
 
     @staticmethod

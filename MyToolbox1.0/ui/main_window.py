@@ -68,8 +68,16 @@ class MainWindow(FluentWindow):
             self.independent_windows.remove(window)
 
     def closeEvent(self, event):
-        self.config_data["window_size"] = [self.width(), self.height()]
-        ConfigManager.save(self.config_data)
-        for w in self.independent_windows:
-            w.close()
+        """窗口关闭时保存配置"""
+
+        # 1. 【关键修复】重新加载最新配置
+        # 防止覆盖掉运行期间（比如排序功能）修改的其他配置项
+        current_config = ConfigManager.load()
+
+        # 2. 更新窗口大小
+        current_config["window_size"] = [self.width(), self.height()]
+
+        # 3. 保存回文件
+        ConfigManager.save(current_config)
+
         event.accept()
