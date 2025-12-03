@@ -44,8 +44,8 @@ Python 3.12 或更高版本
 ```
 code
 Bash
-git clone https://github.com/yourname/python-fluent-toolbox.git
-cd python-fluent-toolbox
+git clone https://gitee.com/lostsing/MyToolbox.git
+cd MyToolbox
 ```
 
 安装依赖
@@ -136,6 +136,7 @@ MyToolbox/
 
 📄 许可证
 本项目采用 MIT 许可证。
+
 🙏 致谢
 
 UI 框架基于 PyQt-Fluent-Widgets
