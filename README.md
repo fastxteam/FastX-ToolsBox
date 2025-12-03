@@ -31,7 +31,7 @@ Python Fluent Toolbox 是一个高度可扩展的个人工具箱框架。它抛�
 内置 ResourceManager，图标资源随用随取，无需繁琐配置。
 
 📸 应用截图
-建议在此处放入软件的截图，例如 docs/images/screenshot_home.png
+建议在此处放入软件的截图，例如 ![输入图片说明](docs/images/screenshot_home.png)
 
 🚀 安装指南
 前置要求
