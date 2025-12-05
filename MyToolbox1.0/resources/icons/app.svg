@@ -1,0 +1,43 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="bg_gradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#E8EFFC"/>
+            <stop offset="1" stop-color="#CFDFF6"/>
+        </linearGradient>
+
+        <linearGradient id="fluent_black" x1="150" y1="150" x2="362" y2="362" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#5B6C8C"/>
+            <stop offset="1" stop-color="#2D3748"/>
+        </linearGradient>
+
+        <filter id="soft_glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="blur"/>
+            <feOffset dx="0" dy="4" result="offsetBlur"/>
+            <feFlood flood-color="#FFFFFF" flood-opacity="0.3" result="offsetColor"/>
+            <feComposite in="offsetColor" in2="offsetBlur" operator="in" result="offsetBlur"/>
+            <feMerge>
+                <feMergeNode in="offsetBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#bg_gradient)"/>
+
+    <g transform="translate(32, 32)">
+        <path d="M120 60C90 70 70 100 75 130C80 160 110 180 140 170C170 160 190 130 185 100C180 70 150 50 120 60Z" fill="url(#fluent_black)"/>
+
+        <path d="M328 60C358 70 378 100 373 130C368 160 338 180 308 170C278 160 258 130 263 100C268 70 298 50 328 60Z" fill="url(#fluent_black)"/>
+
+        <ellipse cx="224" cy="260" rx="170" ry="150" fill="white" filter="url(#soft_glow)"/>
+
+        <path d="M145 200C120 210 110 240 120 270C130 300 160 315 185 305C210 295 220 265 210 235C200 205 170 190 145 200Z" fill="url(#fluent_black)"/>
+
+        <path d="M303 200C328 210 338 240 328 270C318 300 288 315 263 305C238 295 228 265 238 235C248 205 278 190 303 200Z" fill="url(#fluent_black)"/>
+
+        <circle cx="170" cy="245" r="8" fill="white" fill-opacity="0.9"/>
+        <circle cx="278" cy="245" r="8" fill="white" fill-opacity="0.9"/>
+
+        <path d="M224 330C210 330 200 340 205 355C210 370 224 375 224 375C224 375 238 370 243 355C248 340 238 330 224 330Z" fill="url(#fluent_black)"/>
+    </g>
+</svg>

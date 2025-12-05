@@ -7,9 +7,12 @@
     "custom_colors": {},
     "plugin_order": [
         "数据转换工坊",
-        "目录树工具箱",
         "Markdown 笔记",
+        "目录树工具箱",
         "Python打包工具",
+        "批量重命名",
         "科学计算器"
-    ]
+    ],
+    "disabled_plugins": [],
+    "background_image": "resources/backgrounds/z-image_00009_.png"
 }

@@ -1,60 +1,77 @@
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from qfluentwidgets import FluentWindow, NavigationItemPosition, FluentIcon
 
 from core.plugin_manager import PluginManager
 from core.config import ConfigManager
+from core.resource_manager import qicon
 from ui.views import CentralTabWidget
 from ui.tool_window import ToolWindow
+from ui.settings_interface import SettingsInterface
 
 
 class MainWindow(FluentWindow):
     def __init__(self):
         super().__init__()
 
-        self.independent_windows = []  # 独立窗口列表
+        self.independent_windows = []
 
-        # 1. 配置加载
+        # 1. 加载配置
         self.config_data = ConfigManager.load()
         ConfigManager.apply_theme(self.config_data["theme"])
 
-        # 2. 窗口基础设置
         self.setWindowTitle("Python Fluent Toolbox")
+
+        # 设置窗口图标
+        app_icon = qicon("app")
+        if app_icon.isNull():
+            self.setWindowIcon(FluentIcon.TILES.icon())
+        else:
+            self.setWindowIcon(app_icon)
+
         w, h = self.config_data.get("window_size", [1000, 700])
         self.resize(w, h)
 
-        # 3. 插件加载
         self.plugin_manager = PluginManager()
         self.plugin_manager.load_plugins()
 
-        # 4. 初始化 UI
         self.init_ui()
 
     def init_ui(self):
-        plugins = self.plugin_manager.get_plugins()
+        # 1. 加载首页插件
+        plugins = self.plugin_manager.get_plugins(include_disabled=False)
 
-        # --- 核心修改：使用统一的 Tab 视图 ---
+        # 2. 创建核心工作台
         self.central_interface = CentralTabWidget(plugins, self)
         self.central_interface.setObjectName("central_interface")
-
-        # 连接独立窗口信号
         self.central_interface.tool_new_window.connect(self.open_tool_independent)
 
-        # 将其添加到 FluentWindow 的主区域
-        # 我们使用 addSubInterface 添加它，并给它一个 HOME 图标
-        # 注意：这里我们不再需要 "工作台" 这个额外的侧边栏条目了
+        # 获取首页图标
+        icon_home = getattr(FluentIcon, 'HOME', None)
+        if not icon_home:
+            icon_home = getattr(FluentIcon, 'TILES', FluentIcon.EDIT)
+
         self.addSubInterface(
             self.central_interface,
-            FluentIcon.HOME,
+            icon_home,
             "工作台",
             position=NavigationItemPosition.TOP
         )
 
-        # 你可以添加其他全局功能到侧边栏，比如设置
         self.navigationInterface.addSeparator()
-        if hasattr(FluentIcon, 'SETTING'):
-            # 仅作为演示，这里没写 SettingsInterface
-            pass
+
+        # 3. 创建设置页
+        self.settings_interface = SettingsInterface(self)
+
+        icon_setting = getattr(FluentIcon, 'SETTING', getattr(FluentIcon, 'SETTINGS', FluentIcon.EDIT))
+
+        self.addSubInterface(
+            self.settings_interface,
+            icon_setting,
+            "设置",
+            position=NavigationItemPosition.BOTTOM
+        )
 
     def open_tool_independent(self, plugin):
         """打开独立窗口"""
@@ -67,17 +84,23 @@ class MainWindow(FluentWindow):
         if window in self.independent_windows:
             self.independent_windows.remove(window)
 
+    def update_background(self, path):
+        """
+        【新增】背景图更新接口
+        供设置页面调用，通知首页刷新背景
+        """
+        if hasattr(self, 'central_interface') and hasattr(self.central_interface, 'home_view'):
+            self.central_interface.home_view.load_background()
+
     def closeEvent(self, event):
-        """窗口关闭时保存配置"""
+        try:
+            current_config = ConfigManager.load()
+            current_config["window_size"] = [self.width(), self.height()]
+            ConfigManager.save(current_config)
+        except Exception as e:
+            print(f"关闭保存失败: {e}")
 
-        # 1. 【关键修复】重新加载最新配置
-        # 防止覆盖掉运行期间（比如排序功能）修改的其他配置项
-        current_config = ConfigManager.load()
-
-        # 2. 更新窗口大小
-        current_config["window_size"] = [self.width(), self.height()]
-
-        # 3. 保存回文件
-        ConfigManager.save(current_config)
+        for w in self.independent_windows:
+            w.close()
 
         event.accept()
