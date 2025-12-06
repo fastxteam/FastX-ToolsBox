@@ -2,7 +2,7 @@
     "theme": "Light",
     "window_size": [
         1000,
-        877
+        972
     ],
     "custom_colors": {},
     "plugin_order": [
@@ -14,5 +14,11 @@
         "科学计算器"
     ],
     "disabled_plugins": [],
-    "background_image": "resources/backgrounds/z-image_00009_.png"
+    "background_image": "",
+    "ai_palette_config": {
+        "base_url": "https://api.openai.com/v1",
+        "api_key": "",
+        "model": "Deepseek"
+    },
+    "asset_folders": []
 }
