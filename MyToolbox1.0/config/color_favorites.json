@@ -1,0 +1,46 @@
+{
+    "items": [
+        {
+            "id": "a590c05c-8a4f-449a-b5ce-823d3c43cb13",
+            "type": "custom_palette",
+            "name": "demo",
+            "colors": [
+                "#FA541C",
+                "#52C41A",
+                "#1890FF"
+            ],
+            "timestamp": 1765126042
+        },
+        {
+            "id": "d50ec7d1-8cf5-4a79-95d3-7760b9253c4c",
+            "type": "palette",
+            "colors": [
+                "#ffa2e2",
+                "#f8f0ec",
+                "#eccdc2",
+                "#c7a7a1",
+                "#b8c0b5"
+            ],
+            "name": "莫兰迪暖调粉樱",
+            "timestamp": 1765126029
+        },
+        {
+            "id": "fddb8d62-4f19-483d-842e-d4a5ec122522",
+            "type": "gradient",
+            "colors": [
+                "#a18cd1",
+                "#fbc2eb"
+            ],
+            "angle": 135,
+            "name": "莫兰迪紫",
+            "timestamp": 1765125975
+        },
+        {
+            "id": "f8f43374-25a0-421b-a6ea-40356cf03a99",
+            "type": "color",
+            "hex": "#f8d86a",
+            "name": "葵扇黄",
+            "timestamp": 1765125970
+        }
+    ]
+}

@@ -11,13 +11,18 @@
         "目录树工具箱",
         "Python打包工具",
         "批量重命名",
+        "科学计算器",
+        "颜色助手",
+        "图标浏览器"
+    ],
+    "disabled_plugins": [
         "科学计算器"
     ],
-    "disabled_plugins": [],
     "background_image": "",
     "ai_palette_config": {
+        "type": "Google Gemini",
         "base_url": "https://api.deepseek.com",
-        "model": "deepseek-chat"
+        "model": "gemini-2.5-flash"
     },
     "asset_folders": []
 }
