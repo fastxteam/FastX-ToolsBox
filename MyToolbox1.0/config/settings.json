@@ -1,8 +1,8 @@
 {
     "theme": "Light",
     "window_size": [
-        1000,
-        972
+        1133,
+        838
     ],
     "custom_colors": {},
     "plugin_order": [
@@ -16,9 +16,8 @@
     "disabled_plugins": [],
     "background_image": "",
     "ai_palette_config": {
-        "base_url": "https://api.openai.com/v1",
-        "api_key": "",
-        "model": "Deepseek"
+        "base_url": "https://api.deepseek.com",
+        "model": "deepseek-chat"
     },
     "asset_folders": []
 }
