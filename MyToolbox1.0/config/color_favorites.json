@@ -1,6 +1,13 @@
 {
     "items": [
         {
+            "id": "d6534b25-e090-4284-b938-4a275ddd563a",
+            "type": "color",
+            "hex": "#59D499",
+            "name": "自定义颜色",
+            "timestamp": 1765203787
+        },
+        {
             "id": "a590c05c-8a4f-449a-b5ce-823d3c43cb13",
             "type": "custom_palette",
             "name": "demo",

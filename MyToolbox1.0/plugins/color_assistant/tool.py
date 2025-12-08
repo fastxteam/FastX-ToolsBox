@@ -18,7 +18,7 @@ from plugins.color_assistant.pages.grid_page import PaletteGridPage
 from plugins.color_assistant.pages.ai_page import AiPalettePage
 from plugins.color_assistant.pages.fav_page import FavPage
 from plugins.color_assistant.pages.gradient_page import GradientPage
-
+from plugins.color_assistant.pages.image_page import ImagePalettePage # 新增
 
 class ColorAssistantPlugin(PluginInterface):
     @property
@@ -85,10 +85,11 @@ class ColorAssistantWidget(QWidget):
         # 所以你可以放心地写 qicon("ai"), qicon("gradient") 等
 
         # 如果你想混用 FluentIcon 枚举和自定义 QIcon，逻辑如下：
-
+        icon_image = getattr(FluentIcon, 'PHOTO', FluentIcon.CAMERA)
         self.items = [
             ("颜色", getattr(FluentIcon, 'PALETTE', FluentIcon.PALETTE), ColorPickerPage()),  # 尝试加载 color_wheel.svg
             ("AI 配色", qicon("colorai"), AiPalettePage()),
+            ("图片色卡", qicon("colorai"), ImagePalettePage()),  # 新增
             ("渐变色", qicon("gradient"), GradientPage()),  # 加载 gradient.svg
             ("UI 色卡", qicon("colorui"), PaletteGridPage("ui")),
             ("传统色", getattr(FluentIcon, 'PENCIL_INK', FluentIcon.IOT), PaletteGridPage("traditional")),

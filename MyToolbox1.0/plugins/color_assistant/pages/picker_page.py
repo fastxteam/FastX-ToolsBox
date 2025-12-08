@@ -1,12 +1,18 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
                                QFrame, QScrollArea, QApplication)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 
 from qfluentwidgets import (CardWidget, StrongBodyLabel, BodyLabel, LineEdit,
-                            TransparentToolButton, FluentIcon, ToolButton, Slider)
+                            TransparentToolButton, FluentIcon, ToolButton, Slider, InfoBar)
 
-from ..components.color_wheel import ColorWheel, ScreenColorPicker
+from plugins.color_assistant.components.color_wheel import ColorWheel, ScreenColorPicker
+from plugins.color_assistant.services import CollectionService
 from core.resource_manager import qicon
 
 
@@ -24,25 +30,36 @@ class ColorPickerPage(QWidget):
         # --- 左侧 ---
         self.left_container = QWidget()
         self.left_container.setFixedWidth(400)
-        # 初始样式，后续会动态更新
         self.left_container.setStyleSheet(
             f"background-color: {self.current_color.name()}; border-top-left-radius: 10px; border-bottom-left-radius: 10px;")
         l_layout = QVBoxLayout(self.left_container);
         l_layout.setContentsMargins(30, 30, 30, 30);
         l_layout.setSpacing(20)
 
+        # 顶部工具栏
+        top_bar = QHBoxLayout()
         icon_eye = qicon("eye");
         if icon_eye.isNull(): icon_eye = getattr(FluentIcon, 'PENCIL_INK', FluentIcon.EDIT).icon()
         self.btn_pick = ToolButton(icon_eye, self.left_container);
         self.btn_pick.setFixedSize(36, 36)
         self.btn_pick.clicked.connect(self.start_screen_pick)
-        l_layout.addWidget(self.btn_pick, 0, Qt.AlignLeft)
+
+        # 【新增】收藏按钮
+        self.btn_fav = ToolButton(FluentIcon.HEART, self.left_container)
+        self.btn_fav.setFixedSize(36, 36)
+        self.btn_fav.setToolTip("收藏当前颜色")
+        self.btn_fav.clicked.connect(self.add_to_fav)
+
+        top_bar.addWidget(self.btn_pick)
+        top_bar.addStretch(1)
+        top_bar.addWidget(self.btn_fav)
+        l_layout.addLayout(top_bar)
 
         self.color_wheel = ColorWheel(self.left_container)
         self.color_wheel.colorChanged.connect(self.on_wheel_changed)
         l_layout.addWidget(self.color_wheel, 0, Qt.AlignCenter)
 
-        self.slider_v = Slider(Qt.Horizontal, self.left_container)
+        self.slider_v = Slider(Qt.Horizontal, self.left_container);
         self.slider_v.setRange(0, 255);
         self.slider_v.setValue(255)
         self.slider_v.valueChanged.connect(self.on_val_changed)
@@ -123,11 +140,15 @@ class ColorPickerPage(QWidget):
         self.color_wheel.emit()
 
     def update_all(self, color, update_wheel=True):
+        # 动态调整按钮颜色
         text_col = "white" if color.lightness() < 180 else "black"
+        style = f"background-color: rgba(255,255,255,0.3); border-radius: 18px; border: none; color: {text_col};"
+
         self.left_container.setStyleSheet(
             f"background-color: {color.name()}; border-top-left-radius: 10px; border-bottom-left-radius: 10px;")
-        self.btn_pick.setStyleSheet(
-            f"background-color: rgba(255,255,255,0.3); border-radius: 18px; border: none; color: {text_col};")
+        self.btn_pick.setStyleSheet(style)
+        self.btn_fav.setStyleSheet(style)
+
         if update_wheel: self.color_wheel.set_col(color); self.slider_v.setValue(color.value())
 
         self.value_inputs["HEX"].setText(color.name().upper())
@@ -168,4 +189,10 @@ class ColorPickerPage(QWidget):
                 f.hide()
 
     def copy_text(self, text):
-        QApplication.clipboard().setText(text)
+        QApplication.clipboard().setText(text);
+        InfoBar.success("已复制", text, parent=self.window())
+
+    def add_to_fav(self):
+        hex_code = self.current_color.name().upper()
+        CollectionService.add_color(hex_code, "自定义颜色")
+        InfoBar.success("收藏成功", f"{hex_code} 已加入收藏夹", parent=self.window())

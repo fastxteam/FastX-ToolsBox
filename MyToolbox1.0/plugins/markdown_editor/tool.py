@@ -1,364 +1,226 @@
 import os
 import re
 import markdown
-from core.resource_manager import qicon
-# 引入打印支持，用于导出 PDF
-from PySide6.QtPrintSupport import QPrinter
-
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                               QSplitter, QFileDialog, QFrame, QTextBrowser)
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+                               QFileDialog, QFrame, QTextBrowser, QLabel)
 from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
-                           QShortcut, QKeySequence, QTextCursor)
+                           QShortcut, QKeySequence)
 from PySide6.QtCore import Qt, QUrl, QTimer
 
-from qfluentwidgets import (PlainTextEdit, FluentIcon, TransparentToolButton,
-                            ToolTipFilter, ToolTipPosition, isDarkTheme,
-                            InfoBar)
+from qfluentwidgets import (FluentIcon, TransparentToolButton, ToolTipFilter,
+                            ToolTipPosition, isDarkTheme, InfoBar)
 from core.plugin_interface import PluginInterface
+from plugins.markdown_editor.components.code_editor import CodeEditor
 
 
-# ==========================================
-# 1. 语法高亮 (保持不变，用于左侧编辑器)
-# ==========================================
-class MdHighlighter(QSyntaxHighlighter):
-    def __init__(self, document):
-        super().__init__(document)
-        self.rules = []
-        # 根据主题适配颜色
-        base_color = QColor("#dcdcdc") if isDarkTheme() else QColor("#333333")
-        header_color = QColor("#4EC9B0") if isDarkTheme() else QColor("#005cc5")
-        link_color = QColor("#9cdcfe") if isDarkTheme() else QColor("#005cc5")
-
-        # 正则规则
-        self.rules.append((re.compile(r"^#+.*"), self.fmt(header_color, True)))
-        self.rules.append((re.compile(r"\*\*.*?\*\*"), self.fmt(QColor("#e91e63"), True)))
-        self.rules.append((re.compile(r"`.*?`"), self.fmt(QColor("#22863a"))))
-        self.rules.append((re.compile(r"!\[.*?\]\(.*?\)"), self.fmt(QColor("#d32f2f"))))
-        self.rules.append((re.compile(r"\[.*?\]\(.*?\)"), self.fmt(link_color, False, True)))
-
-    def fmt(self, color, bold=False, underline=False):
-        f = QTextCharFormat()
-        f.setForeground(color)
-        if bold: f.setFontWeight(QFont.Bold)
-        if underline: f.setFontUnderline(True)
-        return f
-
-    def highlightBlock(self, text):
-        for pattern, format in self.rules:
-            for match in pattern.finditer(text):
-                self.setFormat(match.start(), match.end() - match.start(), format)
-
-
-# ==========================================
-# 2. 插件入口
-# ==========================================
 class MarkdownPlugin(PluginInterface):
     @property
-    def name(self) -> str: return "Markdown 笔记"
+    def name(self): return "Markdown 笔记"
 
     @property
-    def icon(self): return qicon("markdown")
+    def icon(self): return FluentIcon.DOCUMENT
 
     @property
-    def group(self) -> str: return "办公工具"
+    def group(self): return "办公工具"
 
     @property
-    def theme_color(self) -> str: return "#0078D4"
+    def theme_color(self): return "#0078D4"
 
     @property
-    def description(self) -> str: return "轻量级 Markdown 编辑器，支持导出 HTML/PDF"
+    def description(self): return "极简风格 Markdown 编辑器"
 
-    def create_widget(self) -> QWidget: return MarkdownWidget()
+    def create_widget(self): return MarkdownWidget()
 
 
-# ==========================================
-# 3. 核心 Widget (最终增强版)
-# ==========================================
+class MdHighlighter(QSyntaxHighlighter):
+    def __init__(self, doc):
+        super().__init__(doc)
+        self.rules = []
+        # VS Code Dark 风格
+        if isDarkTheme():
+            h_col = "#569cd6";
+            code_col = "#ce9178";
+            link_col = "#9cdcfe"
+        else:
+            h_col = "#0000ff";
+            code_col = "#a31515";
+            link_col = "#0000ff"
+
+        self.rules = [
+            (r"^#+.*", h_col, True),
+            (r"\*\*.*?\*\*", code_col, True),
+            (r"`.*?`", "#6a9955", False),
+            (r"!\[.*?\]\(.*?\)", link_col, False)
+        ]
+
+    def highlightBlock(self, text):
+        for pattern, col, bold in self.rules:
+            for m in re.finditer(pattern, text):
+                fmt = QTextCharFormat()
+                fmt.setForeground(QColor(col))
+                if bold: fmt.setFontWeight(QFont.Bold)
+                self.setFormat(m.start(), m.end() - m.start(), fmt)
+
+
 class MarkdownWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.current_file = None
 
-        # 允许拖拽文件
-        self.setAcceptDrops(True)
+        # 布局
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
-        self.v_layout = QVBoxLayout(self)
-        self.v_layout.setContentsMargins(0, 0, 0, 0)
-        self.v_layout.setSpacing(0)
-
+        # 1. 工具栏
         self.init_toolbar()
 
+        # 2. 分割器
         self.splitter = QSplitter(Qt.Horizontal)
         self.splitter.setHandleWidth(1)
-        split_col = "#333" if isDarkTheme() else "#e0e0e0"
-        self.splitter.setStyleSheet(f"QSplitter::handle {{ background-color: {split_col}; }}")
+        self.main_layout.addWidget(self.splitter)
 
-        self.v_layout.addWidget(self.splitter)
-
-        # --- 左侧：编辑器 ---
-        self.editor = PlainTextEdit(self)
-        font = QFont("Consolas", 11)
-        font.setStyleHint(QFont.Monospace)
-        self.editor.setFont(font)
+        # 3. 编辑器
+        self.editor = CodeEditor()
+        self.editor.setFont(QFont("Consolas", 11))
         self.highlighter = MdHighlighter(self.editor.document())
 
-        # --- 右侧：预览区 ---
-        self.preview = QTextBrowser(self)
+        # 4. 预览区
+        self.preview = QTextBrowser()
         self.preview.setOpenExternalLinks(True)
-        preview_bg = "#202020" if isDarkTheme() else "#ffffff"
-        self.preview.setStyleSheet(f"border: none; background-color: {preview_bg};")
 
         self.splitter.addWidget(self.editor)
         self.splitter.addWidget(self.preview)
-        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(0, 1);
         self.splitter.setStretchFactor(1, 1)
 
-        # --- 底部状态栏 ---
+        # 5. 状态栏
         self.init_statusbar()
 
-        # 防抖渲染
-        self.render_timer = QTimer()
-        self.render_timer.setSingleShot(True)
-        self.render_timer.interval = 300
-        self.render_timer.timeout.connect(self.render_markdown)
+        # --- 核心：应用样式 ---
+        self.apply_theme_style()
 
-        # 信号连接
-        self.editor.textChanged.connect(lambda: self.render_timer.start())
-        self.editor.cursorPositionChanged.connect(self.update_status_bar)  # 光标移动更新状态栏
+        # 逻辑
+        self.timer = QTimer();
+        self.timer.setSingleShot(True);
+        self.timer.interval = 300
+        self.timer.timeout.connect(self.render)
+        self.editor.textChanged.connect(self.timer.start)
+        self.editor.cursorPositionChanged.connect(self.update_status)
 
-        # 【优化1】同步滚动连接
-        self.editor.verticalScrollBar().valueChanged.connect(self.sync_scroll_editor_to_preview)
+        QShortcut("Ctrl+S", self).activated.connect(self.save)
+        QShortcut("Ctrl+O", self).activated.connect(self.open)
 
-        QShortcut(QKeySequence("Ctrl+S"), self).activated.connect(self.save_file)
-        QShortcut(QKeySequence("Ctrl+O"), self).activated.connect(self.open_file)
+        self.editor.setPlainText("# Hello\nWrite something...")
 
-        # 初始内容
-        init_text = """# 欢迎使用
+    def apply_theme_style(self):
+        """一次性设置所有样式，确保统一"""
+        if isDarkTheme():
+            bg = "#1e1e1e";
+            fg = "#d4d4d4";
+            border = "#333333"
+            preview_bg = "#1e1e1e";
+            tool_bg = "#252526"
+        else:
+            bg = "#ffffff";
+            fg = "#333333";
+            border = "#e5e5e5"
+            preview_bg = "#ffffff";
+            tool_bg = "#f3f3f3"
 
-试试 **滚动** 左侧的编辑区，右侧会跟随滚动哦！
+        # 设置 Splitter 样式 (去黑边)
+        self.splitter.setStyleSheet(f"""
+            QSplitter {{ background-color: {bg}; border: none; }}
+            QSplitter::handle {{ background-color: {border}; }}
+        """)
 
-也可以直接把 `.md` 文件 **拖拽** 到这里打开。
-"""
-        self.editor.setPlainText(init_text)
-        self.render_markdown()
+        # 设置编辑器样式
+        self.editor.setStyleSheet(f"""
+            QPlainTextEdit {{
+                background-color: {bg}; color: {fg}; 
+                border: none; padding: 15px;
+            }}
+        """)
+
+        # 设置预览区样式
+        self.preview.setStyleSheet(f"""
+            QTextBrowser {{
+                background-color: {preview_bg}; color: {fg};
+                border: none; padding: 15px; border-left: 1px solid {border};
+            }}
+        """)
+
+        # 设置工具栏样式
+        self.toolbar.setStyleSheet(f"background-color: {tool_bg}; border-bottom: 1px solid {border};")
+        self.status_bar.setStyleSheet(f"background-color: #007acc; color: white;")
 
     def init_toolbar(self):
-        toolbar_container = QWidget()
-        toolbar_container.setFixedHeight(46)
-        border_col = "#252525" if isDarkTheme() else "#e5e5e5"
-        toolbar_container.setStyleSheet(f"border-bottom: 1px solid {border_col}; background: transparent;")
+        self.toolbar = QWidget();
+        self.toolbar.setFixedHeight(40)
+        h = QHBoxLayout(self.toolbar);
+        h.setContentsMargins(10, 0, 10, 0);
+        h.setSpacing(5)
 
-        layout = QHBoxLayout(toolbar_container)
-        layout.setContentsMargins(10, 0, 10, 0)
-        layout.setSpacing(5)
+        def btn(icon, func):
+            b = TransparentToolButton(icon, self);
+            b.clicked.connect(func)
+            h.addWidget(b)
 
-        def add_btn(icon_obj, tooltip, slot):
-            # 注意：TransparentToolButton 既接受 FluentIcon 也接受 QIcon
-            btn = TransparentToolButton(icon_obj, self)
-            btn.setToolTip(tooltip)
-            btn.installEventFilter(ToolTipFilter(btn, showDelay=300, position=ToolTipPosition.BOTTOM))
-            btn.clicked.connect(slot)
-            layout.addWidget(btn)
-
-        # === 现在你可以随心所欲地定义图标了 ===
-
-        # 1. 优先去 resources/icons 找 'folder.svg'，找不到则用 FluentIcon.FOLDER
-        add_btn(qicon("folder"), "打开", self.open_file)
-        add_btn(qicon("save"), "保存", self.save_file)
-
-        # 2. 导出按钮
-        add_btn(qicon("export"), "导出", self.export_file)
-
-        line = QFrame()
-        line.setFrameShape(QFrame.VLine)
-        line.setFixedHeight(20)
-        line.setStyleSheet(f"color: {border_col};")
-        layout.addWidget(line)
-
-        # 3. 格式按钮
-        # 你可以去下个 bold.svg 扔进 resources/icons，这里就会自动变成你的图标
-        add_btn(qicon("bold"), "粗体", lambda: self.insert_syntax("**", "**"))
-        add_btn(qicon("italic"), "斜体", lambda: self.insert_syntax("*", "*"))
-        add_btn(qicon("header"), "标题", lambda: self.insert_line_prefix("# "))
-
-        # 4. 高级功能
-        add_btn(qicon("chart"), "插入图表", lambda: self.insert_syntax("```mermaid\ngraph TD;\n    A-->B;\n", "```"))
-        add_btn(qicon("image"), "插入图片", lambda: self.insert_syntax("![描述](", ")"))
-
-        layout.addStretch(1)
-        self.v_layout.addWidget(toolbar_container)
+        btn(FluentIcon.FOLDER, self.open)
+        btn(FluentIcon.SAVE, self.save)
+        h.addStretch(1)
+        self.main_layout.addWidget(self.toolbar)
 
     def init_statusbar(self):
-        """【优化3】初始化底部状态栏"""
-        from PySide6.QtWidgets import QLabel
-        self.status_bar = QWidget()
-        self.status_bar.setFixedHeight(24)
-        bg_col = "#252525" if isDarkTheme() else "#f3f3f3"
-        self.status_bar.setStyleSheet(f"background: {bg_col}; border-top: 1px solid #e0e0e0;")
+        self.status_bar = QWidget();
+        self.status_bar.setFixedHeight(22)
+        h = QHBoxLayout(self.status_bar);
+        h.setContentsMargins(10, 0, 10, 0)
+        self.lbl_info = QLabel("Ready")
+        h.addWidget(self.lbl_info);
+        h.addStretch(1)
+        self.main_layout.addWidget(self.status_bar)
 
-        layout = QHBoxLayout(self.status_bar)
-        layout.setContentsMargins(10, 0, 10, 0)
+    def update_status(self):
+        c = self.editor.textCursor()
+        self.lbl_info.setText(f"Ln {c.blockNumber() + 1}, Col {c.columnNumber() + 1}")
 
-        # 信息标签
-        self.status_label = QLabel("Ln 1, Col 1")
-        self.status_label.setStyleSheet("color: gray; font-size: 11px;")
+    def render(self):
+        raw = self.editor.toPlainText()
+        html = markdown.markdown(raw, extensions=['extra', 'codehilite'])
 
-        self.word_count_label = QLabel("0 字")
-        self.word_count_label.setStyleSheet("color: gray; font-size: 11px;")
-
-        layout.addWidget(self.status_label)
-        layout.addWidget(self.word_count_label)
-        layout.addStretch(1)
-
-        self.v_layout.addWidget(self.status_bar)
-
-    def update_status_bar(self):
-        """更新状态栏信息"""
-        cursor = self.editor.textCursor()
-        block_num = cursor.blockNumber() + 1
-        col_num = cursor.columnNumber() + 1
-
-        # 统计字数
-        text = self.editor.toPlainText()
-        word_count = len(text)
-
-        self.status_label.setText(f"Ln {block_num}, Col {col_num}")
-        self.word_count_label.setText(f"{word_count} 字")
-
-    def sync_scroll_editor_to_preview(self):
-        """【优化1】同步滚动：编辑器 -> 预览"""
-        # 计算编辑器滚动的百分比
-        editor_bar = self.editor.verticalScrollBar()
-        preview_bar = self.preview.verticalScrollBar()
-
-        if editor_bar.maximum() <= 0: return
-
-        percent = editor_bar.value() / editor_bar.maximum()
-
-        # 设置预览区滚动到相同百分比的位置
-        target_val = int(percent * preview_bar.maximum())
-        preview_bar.setValue(target_val)
-
-    # ==========================
-    # 【优化2】拖拽事件处理
-    # ==========================
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        urls = event.mimeData().urls()
-        if urls:
-            file_path = urls[0].toLocalFile()
-            if file_path.endswith('.md') or file_path.endswith('.txt'):
-                self.load_file_from_path(file_path)
-
-    def load_file_from_path(self, path):
-        """加载文件的辅助函数"""
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                self.editor.setPlainText(f.read())
-            self.current_file = path
-            self.render_markdown()
-            InfoBar.success("打开成功", os.path.basename(path), parent=self)
-        except Exception as e:
-            InfoBar.error("打开失败", str(e), parent=self)
-
-    # ... (insert_syntax, insert_line_prefix, open_file, save_file, export_file, render_markdown) ...
-    # 为了完整性，请保留这些方法，逻辑与之前完全一致
-    def insert_syntax(self, prefix, suffix):
-        cursor = self.editor.textCursor()
-        if cursor.hasSelection():
-            text = cursor.selectedText()
-            cursor.insertText(f"{prefix}{text}{suffix}")
-        else:
-            cursor.insertText(f"{prefix}{suffix}")
-            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, len(suffix))
-            self.editor.setTextCursor(cursor)
-        self.editor.setFocus()
-
-    def insert_line_prefix(self, prefix):
-        cursor = self.editor.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.StartOfLine)
-        cursor.insertText(prefix)
-        self.editor.setFocus()
-
-    def open_file(self):
-        path, _ = QFileDialog.getOpenFileName(self, "打开 Markdown", "", "Markdown Files (*.md);;All Files (*)")
-        if path:
-            self.load_file_from_path(path)
-
-    def save_file(self):
-        if not self.current_file:
-            path, _ = QFileDialog.getSaveFileName(self, "保存文件", "note.md", "Markdown Files (*.md)")
-            if not path: return
-            self.current_file = path
-        try:
-            with open(self.current_file, 'w', encoding='utf-8') as f:
-                f.write(self.editor.toPlainText())
-            InfoBar.success("成功", "文件已保存", parent=self)
-        except Exception as e:
-            InfoBar.error("错误", str(e), parent=self)
-
-    def export_file(self):
-        path, filt = QFileDialog.getSaveFileName(self, "导出文件", "export.pdf",
-                                                 "PDF Document (*.pdf);;HTML Page (*.html)")
-        if not path: return
-        try:
-            if path.endswith(".pdf"):
-                printer = QPrinter(QPrinter.HighResolution)
-                printer.setOutputFormat(QPrinter.PdfFormat)
-                printer.setOutputFileName(path)
-                self.preview.print_(printer)
-                InfoBar.success("导出成功", f"已保存为 PDF", parent=self)
-            elif path.endswith(".html"):
-                html_content = self.preview.toHtml()
-                with open(path, 'w', encoding='utf-8') as f:
-                    f.write(html_content)
-                InfoBar.success("导出成功", f"已保存为 HTML", parent=self)
-        except Exception as e:
-            InfoBar.error("导出失败", str(e), parent=self)
-
-    def render_markdown(self):
-        raw_text = self.editor.toPlainText()
-        try:
-            body_html = markdown.markdown(raw_text, extensions=['extra', 'codehilite', 'tables', 'fenced_code'])
-        except Exception as e:
-            body_html = f"<p style='color:red'>{e}</p>"
-
+        # CSS 注入
         if isDarkTheme():
-            text_col = "#e0e0e0"
-            bg_col = "#202020"
-            link_col = "#4cc2ff"
-            code_bg = "#2d2d2d"
-            quote_col = "#a0a0a0"
+            css = "body { color: #d4d4d4; } code { background: #2d2d2d; padding: 2px; } img { max-width: 100%; }"
         else:
-            text_col = "#333333"
-            bg_col = "#ffffff"
-            link_col = "#0969da"
-            code_bg = "#f6f8fa"
-            quote_col = "#6a737d"
+            css = "body { color: #333; } code { background: #f0f0f0; padding: 2px; } img { max-width: 100%; }"
 
-        final_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                body {{ font-family: "Microsoft YaHei", sans-serif; font-size: 14pt; color: {text_col}; background-color: {bg_col}; }}
-                a {{ color: {link_col}; text-decoration: none; }}
-                h1 {{ font-size: 24pt; font-weight: bold; border-bottom: 2px solid {text_col}; padding-bottom: 10px; margin-top: 20px; }}
-                h2 {{ font-size: 20pt; font-weight: bold; border-bottom: 1px solid {text_col}; padding-bottom: 5px; margin-top: 15px; }}
-                blockquote {{ border-left: 5px solid {quote_col}; padding: 5px 15px; color: {quote_col}; background-color: {code_bg}; margin: 10px 0; }}
-                pre {{ background-color: {code_bg}; padding: 15px; border-radius: 5px; }}
-                code {{ font-family: "Consolas", monospace; }}
-                table {{ border-collapse: collapse; width: 100%; margin: 15px 0; }}
-                th, td {{ border: 1px solid {text_col}; padding: 8px; }}
-            </style>
-        </head>
-        <body>{body_html}</body>
-        </html>
-        """
-        self.preview.setHtml(final_html)
+        final = f"<html><head><style>{css}</style></head><body>{html}</body></html>"
+
+        # 路径处理
+        if self.current_file:
+            base = os.path.dirname(self.current_file)
+        else:
+            base = os.path.abspath("temp_assets")
+
+        if not os.path.exists(base): os.makedirs(base, exist_ok=True)
+        # 强制转为 file:/// URL
+        self.preview.setSearchPaths([base.replace("\\", "/")])
+        self.preview.setHtml(final)
+
+    def open(self):
+        p, _ = QFileDialog.getOpenFileName(self, "Open", "", "MD (*.md)")
+        if p:
+            self.current_file = p;
+            self.editor.set_base_path(p)
+            with open(p, 'r', encoding='utf-8') as f: self.editor.setPlainText(f.read())
+
+    def save(self):
+        if not self.current_file:
+            p, _ = QFileDialog.getSaveFileName(self, "Save", "note.md", "MD (*.md)")
+            if not p: return
+            self.current_file = p;
+            self.editor.set_base_path(p)
+        with open(self.current_file, 'w', encoding='utf-8') as f:
+            f.write(self.editor.toPlainText())
+        InfoBar.success("Saved", self.current_file, parent=self)
