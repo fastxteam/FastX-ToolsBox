@@ -1,8 +1,8 @@
 {
-    "theme": "Light",
+    "theme": "Auto",
     "window_size": [
         1133,
-        838
+        835
     ],
     "custom_colors": {},
     "plugin_order": [

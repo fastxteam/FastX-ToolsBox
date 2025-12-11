@@ -23,7 +23,6 @@ class MainWindow(FluentWindow):
 
         self.setWindowTitle("Python Fluent Toolbox")
 
-        # 设置窗口图标
         app_icon = qicon("app")
         if app_icon.isNull():
             self.setWindowIcon(FluentIcon.TILES.icon())
@@ -33,24 +32,24 @@ class MainWindow(FluentWindow):
         w, h = self.config_data.get("window_size", [1000, 700])
         self.resize(w, h)
 
+        # 【核心修复】强制窗口背景透明 (依赖操作系统的亚克力效果，或者退化为纯色)
+        # 这行代码能解决很多背景变黑的问题
+        self.setStyleSheet("MainWindow { background: transparent; }")
+
         self.plugin_manager = PluginManager()
         self.plugin_manager.load_plugins()
 
         self.init_ui()
 
     def init_ui(self):
-        # 1. 加载首页插件
         plugins = self.plugin_manager.get_plugins(include_disabled=False)
 
-        # 2. 创建核心工作台
         self.central_interface = CentralTabWidget(plugins, self)
         self.central_interface.setObjectName("central_interface")
         self.central_interface.tool_new_window.connect(self.open_tool_independent)
 
-        # 获取首页图标
         icon_home = getattr(FluentIcon, 'HOME', None)
-        if not icon_home:
-            icon_home = getattr(FluentIcon, 'TILES', FluentIcon.EDIT)
+        if not icon_home: icon_home = getattr(FluentIcon, 'TILES', FluentIcon.EDIT)
 
         self.addSubInterface(
             self.central_interface,
@@ -61,7 +60,6 @@ class MainWindow(FluentWindow):
 
         self.navigationInterface.addSeparator()
 
-        # 3. 创建设置页
         self.settings_interface = SettingsInterface(self)
 
         icon_setting = getattr(FluentIcon, 'SETTING', getattr(FluentIcon, 'SETTINGS', FluentIcon.EDIT))
@@ -74,7 +72,6 @@ class MainWindow(FluentWindow):
         )
 
     def open_tool_independent(self, plugin):
-        """打开独立窗口"""
         new_window = ToolWindow(plugin)
         self.independent_windows.append(new_window)
         new_window.destroyed.connect(lambda: self.cleanup_window(new_window))
@@ -85,10 +82,6 @@ class MainWindow(FluentWindow):
             self.independent_windows.remove(window)
 
     def update_background(self, path):
-        """
-        【新增】背景图更新接口
-        供设置页面调用，通知首页刷新背景
-        """
         if hasattr(self, 'central_interface') and hasattr(self.central_interface, 'home_view'):
             self.central_interface.home_view.load_background()
 
