@@ -67,19 +67,45 @@ python main.py
 
 📦 内置插件
 项目内置了两个高质量的生产力工具作为示例：
-
+0. 设置选项
+支持设置浅色深色主题
+自定义图片背景
+插件个性化排序及隐藏
+![screenshot_settings.png](docs/images/screenshot_settings.png)
 1. 📝 Markdown 笔记
 一个轻量级但功能强大的 Markdown 编辑器。
 双栏预览: 左侧编辑，右侧实时预览，支持同步滚动。
 语法高亮: 支持代码块高亮 (Python, C++, etc.)。
 文件导出: 一键将笔记导出为 PDF 或 HTML 文件。
 无缝体验: 支持拖拽打开文件，自动保存上次窗口大小。
-
+![screenshot_markdown.png](docs/images/screenshot_markdown.png)
 2. 🔄 数据转换工坊
 专为开发者设计的数据处理瑞士军刀。
 JSON 助手: 格式化、压缩 JSON，支持解析不规范的 Python 字典字符串。
 Excel 工具: 一键将 Excel/CSV 文件转换为 JSON 数组。
 数据库工具: Excel 导入 SQLite，或执行 SQL 查询直接导出结果。
+![screenshot_dataconvert.png](docs/images/screenshot_dataconvert.png)
+3. 📘 软件打包工具
+![screenshot_package.png](docs/images/screenshot_package.png)
+4. 🎨 颜色助手
+![screenshot_color7.png](docs/images/screenshot_color7.png)
+![screenshot_color1.png](docs/images/screenshot_color1.png)
+![screenshot_color2.png](docs/images/screenshot_color2.png)
+![screenshot_color3.png](docs/images/screenshot_color3.png)
+![screenshot_color4.png](docs/images/screenshot_color4.png)
+![screenshot_color5.png](docs/images/screenshot_color5.png)
+![screenshot_color6.png](docs/images/screenshot_color6.png)
+5. 📖 批量重命名
+![screenshot_rename.png](docs/images/screenshot_rename.png)
+6. 目录树工具
+一键将目录树文本转换为文件架构。
+
+一键将文件夹架构转换为目录树文本。
+
+![screenshot_tree.png](docs/images/screenshot_tree.png)
+7. 图标浏览器
+![screenshot_icon.png](docs/images/screenshot_icon.png)
+
 
 🔌 插件开发
 想要添加自己的工具？非常简单！只需 3 步即可集成一个新插件。

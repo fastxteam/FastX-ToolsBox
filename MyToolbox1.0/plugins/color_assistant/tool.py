@@ -89,7 +89,7 @@ class ColorAssistantWidget(QWidget):
         self.items = [
             ("颜色", getattr(FluentIcon, 'PALETTE', FluentIcon.PALETTE), ColorPickerPage()),  # 尝试加载 color_wheel.svg
             ("AI 配色", qicon("colorai"), AiPalettePage()),
-            ("图片色卡", qicon("colorai"), ImagePalettePage()),  # 新增
+            ("图片色卡", qicon("image"), ImagePalettePage()),  # 新增
             ("渐变色", qicon("gradient"), GradientPage()),  # 加载 gradient.svg
             ("UI 色卡", qicon("colorui"), PaletteGridPage("ui")),
             ("传统色", getattr(FluentIcon, 'PENCIL_INK', FluentIcon.IOT), PaletteGridPage("traditional")),

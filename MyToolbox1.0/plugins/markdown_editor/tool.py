@@ -18,6 +18,7 @@ from qfluentwidgets import (PlainTextEdit, FluentIcon, TransparentToolButton,
                             InfoBar, CardWidget)
 from core.plugin_interface import PluginInterface
 from plugins.markdown_editor.components.code_editor import CodeEditor
+from core.resource_manager import ResourceManager, qicon
 
 # 尝试导入 matplotlib
 try:
@@ -97,7 +98,7 @@ class MarkdownPlugin(PluginInterface):
     def name(self) -> str: return "Markdown 笔记"
 
     @property
-    def icon(self): return FluentIcon.DOCUMENT
+    def icon(self): return qicon("markdown")
 
     @property
     def group(self) -> str: return "办公工具"

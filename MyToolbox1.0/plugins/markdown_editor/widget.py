@@ -22,7 +22,7 @@ import hashlib
 # Matplotlib 用于公式渲染
 import matplotlib.pyplot as plt
 from io import BytesIO
-
+from core.resource_manager import ResourceManager, qicon
 # 彻底禁用 WebEngine，防止黑屏 Bug
 HAS_WEBENGINE = False
 
@@ -98,7 +98,7 @@ class MarkdownPlugin(PluginInterface):
     def name(self) -> str: return "Markdown 笔记"
 
     @property
-    def icon(self): return FluentIcon.DOCUMENT
+    def icon(self): return qicon("markdown")
 
     @property
     def group(self) -> str: return "办公工具"
