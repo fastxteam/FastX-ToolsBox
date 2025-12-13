@@ -6,7 +6,15 @@ from qfluentwidgets import Theme, setTheme
 
 class ConfigManager:
     """管理应用配置"""
+    # 1. 确定配置存储目录 (例如: C:\Users\User\AppData\Local\MyToolbox)
+    # 这样无论 EXE 在哪里运行，配置都能保存
+    APP_DATA_DIR = Path(os.getenv('LOCALAPPDATA')) / "MyToolbox"
 
+    # 确保目录存在
+    if not APP_DATA_DIR.exists():
+        APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    CONFIG_FILE = APP_DATA_DIR / "settings.json"
     # =========================================================
     # 【核心修复】使用绝对路径定位项目根目录
     # =========================================================
@@ -16,7 +24,7 @@ class ConfigManager:
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
     CONFIG_DIR = PROJECT_ROOT / "config"
-    CONFIG_FILE = CONFIG_DIR / "settings.json"
+
 
     DEFAULT_CONFIG = {
         "theme": "Light",  # Light, Dark, Auto
