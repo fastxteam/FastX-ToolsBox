@@ -229,8 +229,8 @@ class MarkdownWidget(QWidget):
         line.setFixedHeight(20);
         line.setStyleSheet(f"color: {self.border_col};");
         layout.addWidget(line)
-        add(getattr(FluentIcon, 'BOLD', FluentIcon.EDIT), "粗体", lambda: self.insert("**", "**"))
-        add(getattr(FluentIcon, 'ITALIC', FluentIcon.DOCUMENT), "斜体", lambda: self.insert("*", "*"))
+        add(qicon("bold"), "粗体", lambda: self.insert("**", "**"))
+        add(qicon('italic'), "斜体", lambda: self.insert("*", "*"))
         add(FluentIcon.MENU, "标题", lambda: self.insert_line_prefix("# "))
         layout.addStretch(1)
         self.main_layout.addWidget(self.toolbar)
