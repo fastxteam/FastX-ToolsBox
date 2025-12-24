@@ -5,20 +5,23 @@ import os
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_root)
 
+# 2. 导入必要的模块
 from PySide6.QtWidgets import QApplication
-# 2. 【核心修复】这里必须导入 Qt，否则下面代码会报 NameError
 from PySide6.QtCore import Qt
-from ui.main_window import MainWindow
 
 if __name__ == "__main__":
-    # 3. 设置高分屏缩放策略 (现在 Qt 被正确导入了，这行就不会报错了)
+    # 3. 首先设置高分屏缩放策略，必须在创建 QApplication 之前调用
     if hasattr(Qt, 'HighDpiScaleFactorRoundingPolicy'):
         QApplication.setHighDpiScaleFactorRoundingPolicy(
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-
+    
+    # 4. 然后创建 QApplication
     app = QApplication(sys.argv)
-
+    
+    # 5. 导入并创建 MainWindow
+    from ui.main_window import MainWindow
     w = MainWindow()
     w.show()
-
+    
+    # 6. 运行应用
     sys.exit(app.exec())
