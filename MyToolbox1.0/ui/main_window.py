@@ -69,6 +69,9 @@ class MainWindow(FluentWindow):
             "设置",
             position=NavigationItemPosition.BOTTOM
         )
+        
+        # 连接导航栏显示模式变化信号，用于同步调整中央界面
+        self.navigationInterface.displayModeChanged.connect(self.update_central_layout)
 
     def open_tool_independent(self, plugin):
         new_window = ToolWindow(plugin)
@@ -80,6 +83,13 @@ class MainWindow(FluentWindow):
         if window in self.independent_windows:
             self.independent_windows.remove(window)
 
+    def update_central_layout(self):
+        """当导航栏显示模式变化时，更新中央界面布局"""
+        # 确保中央界面正确响应导航栏宽度变化
+        self.central_interface.updateGeometry()
+        # 调用父类的update方法，确保整个窗口重新布局
+        self.update()
+    
     def update_background(self, path):
         if hasattr(self, 'central_interface') and hasattr(self.central_interface, 'home_view'):
             self.central_interface.home_view.load_background()

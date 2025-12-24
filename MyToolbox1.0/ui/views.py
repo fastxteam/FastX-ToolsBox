@@ -151,7 +151,7 @@ class CentralTabWidget(QWidget):
         self.tab_widget.setDocumentMode(True)
         self.tab_widget.setAttribute(Qt.WA_TranslucentBackground)
 
-        # 【核心修复3】QTabWidget 样式强制透明
+        # 【核心修复3】QTabWidget 样式强制透明，包括美化关闭按钮
         self.tab_widget.setStyleSheet("""
             QTabWidget { background: transparent; border: none; }
             QTabWidget::pane { 
@@ -175,6 +175,17 @@ class CentralTabWidget(QWidget):
             }
             QTabBar::tab:!selected:hover { 
                 background: rgba(255, 255, 255, 0.1); 
+            }
+            QTabBar::close-button {
+                subcontrol-position: right;
+                subcontrol-origin: padding;
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+            }
+            QTabBar::close-button:hover {
+                background-color: rgba(255, 0, 0, 0.1);
+                border-radius: 4px;
             }
         """)
 
