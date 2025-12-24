@@ -99,7 +99,7 @@ Excel 工具: 一键将 Excel/CSV 文件转换为 JSON 数组。
 5. 📖 批量重命名
 ![screenshot_rename.png](docs/images/screenshot_rename.png)
 
-6. 目录树工具
+6. 📏目录树工具
 一键将目录树文本转换为文件架构。
 
 一键将文件夹架构转换为目录树文本。

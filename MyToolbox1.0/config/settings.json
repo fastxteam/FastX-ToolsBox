@@ -20,9 +20,9 @@
     ],
     "background_image": "",
     "ai_palette_config": {
-        "type": "Google Gemini",
+        "type": "OpenAI / DeepSeek",
         "base_url": "https://api.deepseek.com",
-        "model": "gemini-2.5-flash"
+        "model": "deepseek-chat"
     },
     "asset_folders": []
 }
